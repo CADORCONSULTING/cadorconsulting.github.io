@@ -65,7 +65,7 @@ a { color: inherit; }
 .menu-btn { align-self: flex-start; }
 .brand { display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
 .brand img { width: 92px; }
-.brand .signature { font-size: .62rem; max-width: 40ch; }
+.brand .signature { font-size: .7rem; max-width: 40ch; }
 .menu-btn {
   font: inherit; font-family: var(--titre); font-weight: 600; font-size: .95rem;
   background: transparent; color: var(--blanc); border: 1px solid var(--or); padding: 8px 14px; cursor: pointer;
@@ -189,20 +189,20 @@ a { color: inherit; }
 .auto img { width: 100%; height: 100%; min-height: 300px; object-fit: cover; }
 
 /* Contact */
-.contact { background: var(--noir); color: var(--clair); display: grid; }
+.contact { background: var(--noir); color: var(--clair); display: grid; grid-template-columns: minmax(0, 1fr); }
 .contact-text { padding: 64px var(--marge); }
 .contact h2 { color: var(--blanc); margin-bottom: 16px; }
 .moyens { list-style: none; margin: 28px 0 0; padding: 0; }
-.moyens li { display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.12); }
+.moyens li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.12); }
 .moyens span { font-family: var(--titre); font-weight: 600; color: var(--or); font-size: .95rem; padding-top: 2px; }
-.moyens a { color: var(--blanc); text-decoration-color: var(--or); text-underline-offset: 3px; }
+.moyens a { overflow-wrap: anywhere; color: var(--blanc); text-decoration-color: var(--or); text-underline-offset: 3px; }
 .contact img { width: 100%; height: 100%; min-height: 300px; object-fit: cover; }
 
 /* Pied de page */
 .site-foot { background: var(--noir); color: var(--clair); border-top: 1px solid rgba(188,164,143,.35); }
 .foot-inner { display: grid; gap: 28px; padding: 48px var(--marge) 96px; font-size: .95rem; }
 .foot-brand img { width: 110px; margin-bottom: 10px; }
-.foot-brand .signature { font-size: .62rem; max-width: 40ch; }
+.foot-brand .signature { font-size: .75rem; max-width: 40ch; }
 .foot-info p { margin: 0 0 8px; }
 .foot-info a { margin-right: 16px; text-decoration-color: var(--or); text-underline-offset: 3px; }
 
