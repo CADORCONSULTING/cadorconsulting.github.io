@@ -1,0 +1,11 @@
+# Dossiers de travail, jamais publiés (décision du 11/10/2026)
+direction/
+outils/
+*.bak
+direction-visuelle.html
+# Photos non utilisees par les pages (seulement par la planche de direction visuelle)
+assets/img/3525-*
+assets/img/3647-*
+assets/img/3700-*
+assets/img/3708-*
+assets/img/3906-*
