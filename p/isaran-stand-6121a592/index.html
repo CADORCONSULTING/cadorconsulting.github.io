@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prime stand">
+<title>Prime stand Destreland</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f7f3ee; --card:#ffffff; --ink:#2b1d14; --muted:#7a6a5d; --line:#e6ddd3;
+  --brand:#7a3e1d; --brand-ink:#ffffff; --gold:#c8962e; --ok:#2e7d4f; --ok-bg:#e5f3ea;
+  --warn:#b4540a; --warn-bg:#fbeee2; --field:#fffbe6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1b1410; --card:#271d17; --ink:#f3e9df; --muted:#b9a797; --line:#3d2f25;
+    --brand:#c27a4a; --brand-ink:#1b1410; --gold:#e0b45a; --ok:#6cc58f; --ok-bg:#1f3428;
+    --warn:#f0a35e; --warn-bg:#3a2717; --field:#2f2619;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1b1410; --card:#271d17; --ink:#f3e9df; --muted:#b9a797; --line:#3d2f25;
+  --brand:#c27a4a; --brand-ink:#1b1410; --gold:#e0b45a; --ok:#6cc58f; --ok-bg:#1f3428;
+  --warn:#f0a35e; --warn-bg:#3a2717; --field:#2f2619;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+header{background:var(--brand);color:var(--brand-ink);padding:14px 16px 12px;padding-top:max(14px,env(safe-area-inset-top))}
+header h1{margin:0;font-size:18px;letter-spacing:.02em}
+header p{margin:2px 0 0;font-size:13px;opacity:.85}
+main{max-width:720px;margin:0 auto;padding:12px 16px}
+section.tab{display:none}
+section.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+.card h2{margin:0 0 8px;font-size:16px}
+.card h3{margin:12px 0 6px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.muted{color:var(--muted);font-size:13px}
+label{display:block;font-size:13px;color:var(--muted);margin:8px 0 3px}
+input,select{width:100%;font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
+input[type=checkbox]{width:auto;transform:scale(1.3);margin-right:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btn{display:inline-block;font:inherit;font-weight:600;border:0;border-radius:12px;padding:11px 14px;background:var(--brand);color:var(--brand-ink);cursor:pointer;margin:6px 6px 0 0}
+.btn.alt{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.small{padding:7px 10px;font-size:14px}
+.big{font-size:28px;font-weight:700;line-height:1.1}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px}
+.kpi .v{font-size:20px;font-weight:700}
+.kpi .l{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:13px;font-weight:600}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.bar{position:relative;height:16px;background:var(--line);border-radius:8px;margin:22px 0 26px}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:8px}
+.bar .tick{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .tick span{position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:var(--muted)}
+.bar .tick b{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:600}
+.scroll{overflow-x:auto}
+.vend{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.alert{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:8px 10px;font-size:14px;margin:8px 0}
+.okmsg{background:var(--ok-bg);color:var(--ok);border-radius:10px;padding:8px 10px;font-size:14px;margin:8px 0}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;font:inherit;font-size:12px;color:var(--muted);padding:9px 2px 10px;cursor:pointer}
+nav button.on{color:var(--brand);font-weight:700}
+nav button i{display:block;font-style:normal;font-size:19px;line-height:1.2}
+.rule p{margin:6px 0}
+.rule h3{text-transform:none;letter-spacing:0;color:var(--ink);font-size:15px}
+.secret{border-left:4px solid var(--warn);padding-left:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>MAISON ISARAN · Prime stand Destreland</h1>
+  <p id="sousTitre"></p>
+</header>
+<main>
+
+<!-- ======================= CE SOIR ======================= -->
+<section class="tab on" id="t-saisie">
+  <div class="card">
+    <h2>Saisie du soir</h2>
+    <p class="muted">À remplir à la clôture, à partir du Z ABILL. Une minute suffit.</p>
+    <label for="sDate">Jour</label>
+    <select id="sDate"></select>
+    <div class="row">
+      <div><label for="sCA">CA du stand (TTC)</label><input id="sCA" type="number" inputmode="decimal" step="0.01" min="0"></div>
+      <div><label for="sTk">Tickets du stand</label><input id="sTk" type="number" inputmode="numeric" step="1" min="0"></div>
+    </div>
+    <label for="sFi">Fiches clients créées (défi d'équipe)</label>
+    <input id="sFi" type="number" inputmode="numeric" step="1" min="0">
+    <div id="sVend"></div>
+    <div id="sCtrl"></div>
+    <button class="btn" id="bSave">Enregistrer</button>
+    <button class="btn alt" id="bClear">Vider ce jour</button>
+    <div id="sMsg"></div>
+  </div>
+</section>
+
+<!-- ======================= TABLEAU ======================= -->
+<section class="tab" id="t-tableau">
+  <div id="tabEquipe"></div>
+  <div id="tabVend"></div>
+</section>
+
+<!-- ======================= SIMULATION ======================= -->
+<section class="tab" id="t-simu">
+  <div class="card secret">
+    <h2>Simulation, pour la direction</h2>
+    <p class="muted">Ce que chacun peut toucher selon le palier atteint et son panier moyen. Les lignes « résultat » ne se montrent pas aux vendeurs. Tout se règle dans l'onglet Réglages.</p>
+    <div id="simu"></div>
+  </div>
+</section>
+
+<!-- ======================= REGLE DU JEU ======================= -->
+<section class="tab" id="t-regle">
+  <div class="card rule" id="regle"></div>
+  <div class="card">
+    <button class="btn" id="bReglePdf">PDF de la règle du jeu</button>
+  </div>
+</section>
+
+<!-- ======================= REGLAGES ======================= -->
+<section class="tab" id="t-reglages">
+  <div class="card secret">
+    <h2>1. Les paliers</h2>
+    <label>Paliers de chiffre d'affaires (€)</label>
+    <div class="row3"><input id="pF0" type="number" step="500"><input id="pF1" type="number" step="500"><input id="pF2" type="number" step="500"></div>
+    <p class="muted">Ces paliers s'appliquent tant que les charges et le taux de marque ci-dessous sont vides. Une fois remplis, les paliers sont calculés : (charges de décembre + résultat espéré) ÷ taux de marque. Ces chiffres-là ne se communiquent pas aux vendeurs. Ils ne sont pas dans la page : ils arrivent par le fichier de réglages de la direction (bouton « Restaurer une sauvegarde »).</p>
+    <div class="row">
+      <div><label for="pCharges">Charges de décembre (€)</label><input id="pCharges" type="number" step="100"></div>
+      <div><label for="pTaux">Taux de marque (%)</label><input id="pTaux" type="number" step="1"></div>
+    </div>
+    <label>Résultat espéré à chaque palier (€)</label>
+    <div class="row3"><input id="pR0" type="number" step="500"><input id="pR1" type="number" step="500"><input id="pR2" type="number" step="500"></div>
+    <label for="pArr">Arrondir les paliers à</label>
+    <select id="pArr"><option value="1">l'euro</option><option value="100">la centaine</option><option value="1000">au millier</option></select>
+    <p id="pPaliers" class="muted"></p>
+  </div>
+
+  <div class="card">
+    <h2>2. La prime</h2>
+    <label>Prime à chaque palier, en % du salaire de la période</label>
+    <div class="row3"><input id="pP0" type="number" step="1"><input id="pP1" type="number" step="1"><input id="pP2" type="number" step="1"></div>
+    <label for="pColl">Part collective (%), le reste est individuel</label>
+    <input id="pColl" type="number" step="5" min="0" max="100">
+    <div class="row">
+      <div><label for="pSb">Panier moyen, seuil bas (€)</label><input id="pSb" type="number" step="0.5"></div>
+      <div><label for="pSbPct">Part individuelle versée (%)</label><input id="pSbPct" type="number" step="5"></div>
+    </div>
+    <div class="row">
+      <div><label for="pSh">Panier moyen, seuil haut (€)</label><input id="pSh" type="number" step="0.5"></div>
+      <div><label class="muted">Part individuelle versée</label><input value="100 %" disabled></div>
+    </div>
+    <label for="pPanRef">Panier moyen de référence pour les calculs (€)</label>
+    <input id="pPanRef" type="number" step="0.5">
+  </div>
+
+  <div class="card">
+    <h2>3. Les jours gagnés</h2>
+    <div class="row">
+      <div><label for="pJg">Prime par jour gagné et par vendeur présent (€)</label><input id="pJg" type="number" step="1"></div>
+      <div><label for="pJgRef">Objectif du jour calé sur le palier</label><select id="pJgRef"><option value="0">1</option><option value="1">2</option><option value="2">3</option></select></div>
+    </div>
+    <p class="muted">Les jours gagnés ne sont versés que si le palier 1 est atteint à la fin.</p>
+  </div>
+
+  <div class="card">
+    <h2>4. Les vendeurs</h2>
+    <div id="pVend"></div>
+    <button class="btn small alt" id="bAddV">Ajouter un vendeur</button>
+  </div>
+
+  <div class="card">
+    <h2>5. La période</h2>
+    <div class="row">
+      <div><label for="pDeb">Premier jour du stand</label><input id="pDeb" type="date"></div>
+      <div><label for="pFin">Dernier jour</label><input id="pFin" type="date"></div>
+    </div>
+    <label for="pFerme">Jours fermés (séparés par une virgule, format AAAA-MM-JJ)</label>
+    <input id="pFerme" type="text">
+    <h3>Poids de chaque jour dans le CA (%)</h3>
+    <p class="muted">Repris du suivi d'Isabelle (distance à Noël, dimanches). Le total est ramené à 100 % automatiquement.</p>
+    <div id="pPoids" class="scroll"></div>
+  </div>
+
+  <div class="card">
+    <h2>6. Sauvegarde</h2>
+    <p class="muted">Les saisies restent dans ce téléphone. Envoyer une sauvegarde chaque semaine, par exemple à Ghassan.</p>
+    <button class="btn" id="bExport">Envoyer une sauvegarde</button>
+    <label class="btn alt" style="display:inline-block;margin:6px 6px 0 0;color:var(--brand)">Restaurer une sauvegarde<input id="fImport" type="file" accept="application/json,.json" style="display:none"></label>
+    <br><button class="btn small alt" id="bReset">Remettre les réglages d'origine</button>
+    <button class="btn small alt" id="bWipe">Effacer toutes les saisies</button>
+  </div>
+</section>
+</main>
+
+<nav>
+  <button data-t="saisie" class="on"><i>✎</i>Ce soir</button>
+  <button data-t="tableau"><i>▦</i>Tableau</button>
+  <button data-t="simu"><i>∑</i>Simulation</button>
+  <button data-t="regle"><i>☰</i>Règle</button>
+  <button data-t="reglages"><i>⚙</i>Réglages</button>
+</nav>
+
+<script>
+"use strict";
+/* ============================================================
+   Données par défaut : arbitrages du 19/10/2026 (Ghassan RIZK),
+   poids journaliers repris du fichier ISARAN_suivi_prime_stand_2026.
+   ============================================================ */
+const POIDS_ISABELLE = [0.035165260277719899,0.011785114255235899,0.0280371669781821,0.021972999825372999,0.0330602933152402,0.035277752013213599,0.0444499675366491,0.033866641932685099,0.020526856017067201,0.039712669409160399,0.026004742912597498,0.035882513476297298,0.037898385019909497,0.054226944523168299,0.054630118831890798,0.046565553001680297,0.059669797690921303,0.074486453536471001,0.087287237838408499,0.059569004113740699,0.035076164858852399,0.013874634159684301,0.0278190273018484,0.0210658576307475,0.040216637295063501,0.021872206248192399];
+const DATES_ISABELLE = ["2026-12-05","2026-12-06","2026-12-07","2026-12-08","2026-12-09","2026-12-10","2026-12-11","2026-12-12","2026-12-13","2026-12-14","2026-12-15","2026-12-16","2026-12-17","2026-12-18","2026-12-19","2026-12-20","2026-12-21","2026-12-22","2026-12-23","2026-12-24","2026-12-26","2026-12-27","2026-12-28","2026-12-29","2026-12-30","2026-12-31"];
+
+function defaults(){
+  const poids = {};
+  DATES_ISABELLE.forEach((d,i)=>poids[d]=Math.round(POIDS_ISABELLE[i]*10000)/100);
+  return {
+    paliersFixes:[45000,50000,55000],
+    charges:0, taux:0, resultats:[0,0,0], arrondi:1000,
+    pct:[10,20,30], coll:50, seuilBas:28, seuilBasPct:50, seuilHaut:30, panierRef:27,
+    jourGagne:5, jourGagneRef:1,
+    debut:"2026-12-05", fin:"2026-12-31", fermes:"2026-12-25",
+    poids,
+    vendeurs:[
+      {id:"v1", nom:"Mari (option)", fixeJour:84, debut:"2026-12-07", fin:"2026-12-31", prime:true},
+      {id:"v2", nom:"Expérimenté", fixeJour:84, debut:"2026-12-07", fin:"2026-12-23", prime:true},
+      {id:"v3", nom:"Junior", fixeJour:84, debut:"2026-12-07", fin:"2026-12-31", prime:true}
+    ]
+  };
+}
+
+const KEY = "isaran-prime-stand-2026";
+let S = {reglages: defaults(), saisies: {}};
+try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); if (o && o.reglages) S = o; } } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+/* ---------------- Outils ---------------- */
+const $ = id => document.getElementById(id);
+const NBSP = " ";
+function num(x){ const n = parseFloat(String(x).replace(",", ".")); return isFinite(n) ? n : 0; }
+function fmt(n, dec){ dec = dec||0; return Number(n||0).toLocaleString("fr-FR",{minimumFractionDigits:dec,maximumFractionDigits:dec}).replace(/[  ]/g, NBSP); }
+function eur(n, dec){ return fmt(n, dec) + NBSP + "€"; }
+function pct(n, dec){ return fmt(n*100, dec||0) + NBSP + "%"; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+const JOURS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+function dObj(s){ const [y,m,d] = s.split("-").map(Number); return new Date(Date.UTC(y,m-1,d)); }
+function dStr(o){ return o.toISOString().slice(0,10); }
+function dLong(s){ const o = dObj(s); return JOURS[o.getUTCDay()] + " " + o.getUTCDate() + "/" + String(o.getUTCMonth()+1).padStart(2,"0"); }
+function today(){ const t = new Date(); return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0"); }
+
+/* ---------------- Calculs ---------------- */
+function joursOuverts(R){
+  const out = []; const fermes = String(R.fermes||"").split(/[,; ]+/).filter(Boolean);
+  if (!R.debut || !R.fin) return out;
+  for (let o = dObj(R.debut); o <= dObj(R.fin); o.setUTCDate(o.getUTCDate()+1)) {
+    const s = dStr(o); if (!fermes.includes(s)) out.push(s);
+    if (out.length > 120) break;
+  }
+  return out;
+}
+function modeCalcule(R){ return num(R.charges) > 0 && num(R.taux) > 0; }
+function paliers(R){
+  if (!modeCalcule(R)) return (R.paliersFixes || [45000,50000,55000]).map(num);
+  const t = num(R.taux)/100, a = num(R.arrondi) || 1;
+  return R.resultats.map(r => Math.round((num(R.charges)+num(r))/t/a)*a);
+}
+function calc(){
+  const R = S.reglages, jours = joursOuverts(R), P = paliers(R);
+  let tot = 0; jours.forEach(d => tot += num(R.poids[d]));
+  const poids = {}; jours.forEach(d => poids[d] = tot ? num(R.poids[d])/tot : 1/jours.length);
+  const ref = P[R.jourGagneRef] || P[1];
+  const saisis = jours.filter(d => S.saisies[d] && S.saisies[d].ca !== "" && S.saisies[d].ca != null);
+  let cumul = 0, tickets = 0, poidsEcoule = 0, fiches = 0, jg = 0;
+  const parJour = {};
+  jours.forEach(d => {
+    const obj = poids[d]*ref, e = S.saisies[d];
+    const ok = !!(e && saisis.includes(d));
+    const ca = ok ? num(e.ca) : null;
+    const gagne = ok && ca >= obj;
+    parJour[d] = {obj, ca, gagne, saisi: ok};
+    if (ok){ cumul += ca; tickets += num(e.tk); poidsEcoule += poids[d]; fiches += num(e.fi); if (gagne) jg++; }
+  });
+  const projection = poidsEcoule ? cumul/poidsEcoule : 0;
+  const niveau = x => { let n = -1; P.forEach((p,i)=>{ if (x >= p) n = i; }); return n; };
+  const atteint = niveau(cumul), projete = niveau(projection);
+  const dernier = saisis.length ? saisis[saisis.length-1] : null;
+  const restants = jours.filter(d => !saisis.includes(d) && (!dernier || d > dernier));
+  const panierEq = tickets ? cumul/tickets : num(R.panierRef);
+  const suivant = atteint < P.length-1 ? atteint+1 : null;
+  const resteSuivant = suivant != null ? P[suivant]-cumul : 0;
+
+  const vend = R.vendeurs.map(v => {
+    const jv = jours.filter(d => d >= v.debut && d <= v.fin);
+    const fixe = num(v.fixeJour)*jv.length;
+    let ca=0, tk=0, jgv=0, pres=0;
+    jours.forEach(d => {
+      const e = S.saisies[d]; if (!e || !parJour[d].saisi || !e.v || !e.v[v.id]) return;
+      const x = e.v[v.id]; if (!x.p) return;
+      pres++; ca += num(x.ca); tk += num(x.tk); if (parJour[d].gagne) jgv++;
+    });
+    const panier = tk ? ca/tk : 0;
+    const tauxInd = tauxIndividuel(panier, R);
+    const primePalier = i => i < 0 ? 0 : fixe*num(R.pct[i])/100;
+    const coll = i => primePalier(i)*num(R.coll)/100;
+    const ind = (i, t) => primePalier(i)*(1-num(R.coll)/100)*t;
+    const joursEur = jgv*num(R.jourGagne);
+    const acquis = v.prime && atteint >= 0 ? coll(atteint)+ind(atteint,tauxInd)+joursEur : 0;
+    const visee = v.prime && projete >= 0 ? coll(projete)+ind(projete,tauxInd)+joursEur : 0;
+    const max = v.prime ? coll(P.length-1)+ind(P.length-1,1)+jv.length*num(R.jourGagne) : 0;
+    return {v, jours:jv.length, fixe, ca, tk, panier, tauxInd, jgv, pres, joursEur, acquis, visee, max, coll, ind, primePalier};
+  });
+  return {R, P, jours, poids, parJour, saisis, cumul, tickets, fiches, jg, projection, atteint, projete, dernier, restants, panierEq, suivant, resteSuivant, vend, ref};
+}
+function tauxIndividuel(panier, R){
+  if (panier >= num(R.seuilHaut)) return 1;
+  if (panier >= num(R.seuilBas)) return num(R.seuilBasPct)/100;
+  return 0;
+}
+
+/* ---------------- Navigation ---------------- */
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section.tab").forEach(s => s.classList.toggle("on", s.id === "t-"+b.dataset.t));
+  renderAll(); window.scrollTo(0,0);
+}));
+
+/* ---------------- Saisie ---------------- */
+function renderDates(){
+  const R = S.reglages, jours = joursOuverts(R), sel = $("sDate"), cur = sel.value;
+  sel.innerHTML = jours.map(d => `<option value="${d}">${dLong(d)}${S.saisies[d] ? " ✓" : ""}</option>`).join("");
+  const t = today();
+  if (cur && jours.includes(cur)) sel.value = cur;
+  else if (jours.includes(t)) sel.value = t;
+  else { const libre = jours.find(d => !S.saisies[d]); sel.value = libre || jours[jours.length-1] || ""; }
+}
+function renderSaisie(){
+  const d = $("sDate").value, R = S.reglages, e = S.saisies[d] || {};
+  $("sCA").value = e.ca ?? ""; $("sTk").value = e.tk ?? ""; $("sFi").value = e.fi ?? "";
+  $("sVend").innerHTML = R.vendeurs.map(v => {
+    const x = (e.v && e.v[v.id]) || {};
+    const prevu = d >= v.debut && d <= v.fin;
+    const present = x.p != null ? x.p : prevu;
+    return `<div class="vend"><label style="color:var(--ink);font-size:15px"><input type="checkbox" data-v="${v.id}" data-k="p" ${present?"checked":""}>${esc(v.nom)} ${prevu?"":"<span class='muted'>(hors planning)</span>"}</label>
+      <div class="row"><div><label>CA sous son code</label><input type="number" inputmode="decimal" step="0.01" data-v="${v.id}" data-k="ca" value="${x.ca ?? ""}"></div>
+      <div><label>Tickets</label><input type="number" inputmode="numeric" step="1" data-v="${v.id}" data-k="tk" value="${x.tk ?? ""}"></div></div></div>`;
+  }).join("");
+  $("sVend").querySelectorAll("input").forEach(i => i.addEventListener("input", controle));
+  ["sCA","sTk"].forEach(id => $(id).oninput = controle);
+  controle(); $("sMsg").innerHTML = "";
+}
+function lireSaisie(){
+  const e = {ca:$("sCA").value, tk:$("sTk").value, fi:$("sFi").value, v:{}};
+  $("sVend").querySelectorAll("input").forEach(i => {
+    const id = i.dataset.v; e.v[id] = e.v[id] || {};
+    e.v[id][i.dataset.k] = i.type === "checkbox" ? i.checked : i.value;
+  });
+  return e;
+}
+function controle(){
+  const e = lireSaisie(); let sCA = 0, sTk = 0;
+  Object.values(e.v).forEach(x => { if (x.p){ sCA += num(x.ca); sTk += num(x.tk); } });
+  let h = "";
+  if (e.ca !== "" && Math.abs(sCA - num(e.ca)) >= 1) h += `<div class="alert">Les vendeurs totalisent ${eur(sCA,2)} pour ${eur(num(e.ca),2)} au stand. Écart : ${eur(num(e.ca)-sCA,2)} non attribués.</div>`;
+  if (e.tk !== "" && sTk !== num(e.tk)) h += `<div class="alert">Les vendeurs totalisent ${sTk} tickets pour ${num(e.tk)} au stand.</div>`;
+  $("sCtrl").innerHTML = h;
+}
+$("sDate").addEventListener("change", renderSaisie);
+$("bSave").addEventListener("click", () => {
+  const d = $("sDate").value, e = lireSaisie();
+  if (e.ca === "") { $("sMsg").innerHTML = `<div class="alert">Saisir au moins le CA du stand.</div>`; return; }
+  S.saisies[d] = e; save(); renderDates(); $("sDate").value = d;
+  const c = calc(), j = c.parJour[d];
+  $("sMsg").innerHTML = `<div class="okmsg">Enregistré. ${j.gagne ? "Jour gagné : objectif de " + eur(j.obj) + " atteint." : "Objectif du jour (" + eur(j.obj) + ") non atteint."} Les PDF sont dans l'onglet Tableau.</div>`;
+});
+$("bClear").addEventListener("click", () => {
+  const d = $("sDate").value; if (!S.saisies[d]) return;
+  if (!confirm("Vider la saisie du " + dLong(d) + " ?")) return;
+  delete S.saisies[d]; save(); renderDates(); $("sDate").value = d; renderSaisie();
+});
+
+/* ---------------- Tableau ---------------- */
+function barre(c){
+  const max = c.P[c.P.length-1]*1.08, w = Math.min(100, c.cumul/max*100);
+  return `<div class="bar" style="margin-bottom:8px"><div class="fill" style="width:${w}%"></div>${c.P.map((p,i)=>`<div class="tick" style="left:${p/max*100}%"><b>P${i+1}</b></div>`).join("")}</div>
+    <p class="muted" style="margin:0 0 10px">${c.P.map((p,i)=>`P${i+1} ${fmt(p/1000)}${NBSP}k€`).join(" · ")}</p>`;
+}
+function phraseSuivant(c){
+  if (c.suivant == null) return "Palier 3 atteint. Bravo à toute l'équipe !";
+  const ventes = c.resteSuivant / (c.panierEq || 1);
+  const nj = c.restants.length;
+  let s = `Palier ${c.suivant+1} : encore ${eur(c.resteSuivant)}, soit ${fmt(Math.ceil(ventes))} ventes à ${eur(c.panierEq,2)}`;
+  if (nj) s += `, environ ${fmt(Math.ceil(ventes/nj))} par jour sur les ${nj} jours restants`;
+  return s + ".";
+}
+function renderTableau(){
+  const c = calc();
+  const dj = c.dernier ? c.parJour[c.dernier] : null;
+  let h = `<div class="card"><h2>L'équipe ${c.dernier ? "au " + dLong(c.dernier) : ""}</h2>`;
+  if (!c.dernier) h += `<p class="muted">Aucune saisie pour l'instant.</p>`;
+  else h += `<div class="kpis">
+      <div class="kpi"><div class="l">CA du jour</div><div class="v">${eur(dj.ca)}</div><div class="l">objectif ${eur(dj.obj)} ${dj.gagne?"<span class='pill ok'>gagné</span>":"<span class='pill warn'>pas atteint</span>"}</div></div>
+      <div class="kpi"><div class="l">CA cumulé</div><div class="v">${eur(c.cumul)}</div><div class="l">projection ${eur(c.projection)}</div></div>
+      <div class="kpi"><div class="l">Jours gagnés</div><div class="v">${c.jg} / ${c.saisis.length}</div><div class="l">${c.jours.length} jours au total</div></div>
+      <div class="kpi"><div class="l">Panier moyen équipe</div><div class="v">${eur(c.panierEq,2)}</div><div class="l">${fmt(c.tickets)} tickets · ${fmt(c.fiches)} fiches clients</div></div>
+    </div>`;
+  h += barre(c) + `<p>${phraseSuivant(c)}</p>`;
+  h += `<button class="btn" id="bPdfEq">PDF équipe pour WhatsApp</button></div>`;
+  $("tabEquipe").innerHTML = h;
+  $("tabVend").innerHTML = c.vend.map((x,i) => `<div class="card"><h2>${esc(x.v.nom)}</h2>
+    ${x.v.prime ? "" : "<p class='muted'>Non concerné par la prime (réglage).</p>"}
+    <div class="kpis">
+      <div class="kpi"><div class="l">Son CA</div><div class="v">${eur(x.ca)}</div><div class="l">${fmt(x.tk)} tickets · ${x.pres} jours</div></div>
+      <div class="kpi"><div class="l">Son panier moyen</div><div class="v">${x.tk?eur(x.panier,2):"-"}</div><div class="l">${libPanier(x, c.R)}</div></div>
+      <div class="kpi"><div class="l">Prime acquise</div><div class="v">${eur(x.acquis)}</div><div class="l">${c.atteint<0?"palier 1 pas encore atteint":"palier "+(c.atteint+1)+" atteint"}</div></div>
+      <div class="kpi"><div class="l">Si la projection se confirme</div><div class="v">${eur(x.visee)}</div><div class="l">maximum possible ${eur(x.max)}</div></div>
+    </div>
+    <button class="btn alt" data-pdfv="${i}">PDF de ${esc(x.v.nom)}</button></div>`).join("");
+  const b = $("bPdfEq"); if (b) b.onclick = () => pdfEquipe(null);
+  document.querySelectorAll("[data-pdfv]").forEach(b => b.onclick = () => pdfEquipe(+b.dataset.pdfv));
+}
+function libPanier(x, R){
+  if (!x.tk) return `seuils ${eur(num(R.seuilBas))} et ${eur(num(R.seuilHaut))}`;
+  if (x.tauxInd >= 1) return "seuil haut atteint, part perso à 100 %";
+  if (x.tauxInd > 0) return `encore ${eur(num(R.seuilHaut)-x.panier,2)} pour le seuil haut`;
+  return `encore ${eur(num(R.seuilBas)-x.panier,2)} pour le seuil bas`;
+}
+
+/* ---------------- PDF ---------------- */
+function nouveauPdf(h){ const { jsPDF } = window.jspdf; return new jsPDF({unit:"mm", format:[120, h||200]}); }
+function pdfTxt(s){ return String(s).replace(/[ ]/g, NBSP).replace(/[’]/g, "'").replace(/[«»]/g, '"').replace(/…/g, "..."); }
+async function partager(doc, nom){
+  const blob = doc.output("blob");
+  try {
+    const f = new File([blob], nom, {type:"application/pdf"});
+    if (navigator.canShare && navigator.canShare({files:[f]})) { await navigator.share({files:[f], title:nom}); return; }
+  } catch(e) { if (e && e.name === "AbortError") return; }
+  doc.save(nom);
+}
+function pdfEquipe(iv){
+  if (!window.jspdf){ alert("La bibliothèque PDF n'est pas chargée : vérifier la connexion internet."); return; }
+  const c = calc(); if (!c.dernier){ alert("Aucune saisie."); return; }
+  const doc = nouveauPdf(iv == null ? 150 : 205), W = 120, M = 9;
+  const brun = [122,62,29], or = [200,150,46], gris = [122,106,93];
+  const dj = c.parJour[c.dernier];
+  doc.setFillColor(...brun); doc.rect(0,0,W,22,"F");
+  doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(13);
+  doc.text(pdfTxt("MAISON ISARAN · Stand Destreland"), M, 10);
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  doc.text(pdfTxt("Le point du " + dLong(c.dernier) + (iv!=null ? " · " + c.vend[iv].v.nom : "")), M, 17);
+  let y = 32; doc.setTextColor(43,29,20);
+  const ligne = (l, v, gras) => { doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(...gris); doc.text(pdfTxt(l), M, y); doc.setTextColor(43,29,20); doc.setFont("helvetica", gras?"bold":"normal"); doc.setFontSize(gras?12:11); doc.text(pdfTxt(v), W-M, y, {align:"right"}); y += 7; };
+  doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text("L'ÉQUIPE", M, y); y += 7;
+  ligne("CA du jour", eur(dj.ca), true);
+  ligne("Objectif du jour", eur(dj.obj) + (dj.gagne ? "   GAGNÉ" : "   pas atteint"));
+  ligne("CA cumulé", eur(c.cumul), true);
+  ligne("Jours gagnés", c.jg + " sur " + c.saisis.length);
+  ligne("Panier moyen de l'équipe", eur(c.panierEq,2));
+  ligne("Fiches clients créées", fmt(c.fiches));
+  // barre
+  y += 4; const bx = M, bw = W-2*M, max = c.P[c.P.length-1]*1.08;
+  doc.setFillColor(230,221,211); doc.roundedRect(bx, y, bw, 5, 2, 2, "F");
+  doc.setFillColor(...or); const fw = Math.max(0.1, Math.min(bw, c.cumul/max*bw)); doc.roundedRect(bx, y, fw, 5, 2, 2, "F");
+  doc.setFontSize(8); doc.setTextColor(...gris);
+  c.P.forEach((p,i) => { const x = bx + p/max*bw; doc.setDrawColor(43,29,20); doc.line(x, y-1.5, x, y+6.5); doc.text("P"+(i+1), x, y-2.5, {align:"center"}); });
+  doc.text(pdfTxt(c.P.map((p,i)=>"P"+(i+1)+" "+fmt(p/1000)+" k€").join("   ·   ")), M, y+11);
+  y += 19; doc.setTextColor(43,29,20); doc.setFontSize(10); doc.setFont("helvetica","normal");
+  const ph = doc.splitTextToSize(pdfTxt(phraseSuivant(c)), W-2*M); doc.text(ph, M, y); y += ph.length*5 + 4;
+  if (iv != null){
+    const x = c.vend[iv];
+    doc.setDrawColor(...or); doc.line(M, y, W-M, y); y += 8;
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text(pdfTxt(x.v.nom.toUpperCase()), M, y); y += 7;
+    ligne("Ton CA", eur(x.ca), true);
+    ligne("Tes tickets", fmt(x.tk));
+    ligne("Ton panier moyen", x.tk ? eur(x.panier,2) : "-");
+    ligne("Tes jours gagnés", x.jgv + "  (" + eur(x.joursEur) + ")");
+    ligne("Ta prime acquise à ce jour", eur(x.acquis), true);
+    ligne("Si la projection se confirme", eur(x.visee), true);
+    ligne("Ce que tu peux viser au maximum", eur(x.max));
+    const conseil = libPanier(x, c.R);
+    const cs = doc.splitTextToSize(pdfTxt("Panier moyen : " + conseil + ". Un petit plus à chaque ballotin (confiture, sachet) fait monter ton panier."), W-2*M);
+    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text(cs, M, y+2); y += cs.length*5 + 4;
+  }
+  doc.setFontSize(8); doc.setTextColor(...gris);
+  doc.text(pdfTxt("Primes versées si le palier 1 est atteint au 31/12. Détail dans la règle du jeu."), M, (iv==null?150:205)-6);
+  partager(doc, "Stand " + c.dernier + (iv!=null ? " " + c.vend[iv].v.nom.replace(/[^\wÀ-ÿ ]/g,"") : " equipe") + ".pdf");
+}
+
+/* ---------------- Simulation ---------------- */
+function renderSimu(){
+  const c = calc(), R = c.R, P = c.P;
+  const niveaux = [{l:"sous " + eur(num(R.seuilBas)), t:0},{l:eur(num(R.seuilBas)) + " à " + eur(num(R.seuilHaut)), t:num(R.seuilBasPct)/100},{l:eur(num(R.seuilHaut)) + " et plus", t:1}];
+  let h = `<p class="muted">Paliers : ${P.map((p,i)=>"P"+(i+1)+" "+eur(p)).join(" · ")}. Prime : ${R.pct.map(x=>x+NBSP+"%").join(" / ")} du salaire de la période, ${R.coll}${NBSP}% collectif.</p>`;
+  c.vend.filter(x => x.v.prime).forEach(x => {
+    h += `<h3>${esc(x.v.nom)} · ${x.jours} jours · salaire ${eur(x.fixe)}</h3><div class="scroll"><table><tr><th>Palier</th>${niveaux.map(n=>`<th>Panier ${n.l}</th>`).join("")}</tr>`;
+    P.forEach((p,i) => { h += `<tr><td>P${i+1} ${fmt(p/1000)}${NBSP}k€</td>${niveaux.map(n=>`<td>${eur(x.coll(i)+x.ind(i,n.t))}</td>`).join("")}</tr>`; });
+    h += `<tr><td colspan="4" class="muted" style="text-align:left">+ jours gagnés : jusqu'à ${eur(x.jours*num(R.jourGagne))} (${x.jours} × ${eur(num(R.jourGagne))})</td></tr></table></div>`;
+  });
+  // coût équipe et part du résultat
+  const benef = c.vend.filter(x => x.v.prime);
+  const jgMax = benef.reduce((s,x)=>s + x.jours*num(R.jourGagne), 0);
+  const avecRes = modeCalcule(R);
+  h += `<h3>Coût pour l'entreprise (équipe, panier haut pour tous)</h3><div class="scroll"><table><tr><th>Palier</th><th>Primes de palier</th><th>+ jours gagnés max</th>${avecRes ? "<th>Résultat espéré</th><th>Part du résultat rendue</th><th>Part du supplément rendue</th>" : "<th>En % du CA</th>"}</tr>`;
+  let prevCout = null, prevRes = null;
+  P.forEach((p,i) => {
+    const cout = benef.reduce((s,x)=>s + x.primePalier(i), 0);
+    const res = num(R.resultats[i]);
+    const sup = prevCout == null ? "-" : pct((cout-prevCout)/((res-prevRes)||1),1);
+    h += `<tr><td>P${i+1}</td><td>${eur(cout)}</td><td>${eur(jgMax)}</td>${avecRes ? `<td>${eur(res)}</td><td>${pct(cout/(res||1),1)}</td><td>${sup}</td>` : `<td>${pct((cout+jgMax)/(p||1),1)}</td>`}</tr>`;
+    prevCout = cout; prevRes = res;
+  });
+  h += `</table></div>` + (avecRes ? "" : `<p class="muted">Pour voir la part du résultat rendue aux vendeurs, restaurer le fichier de réglages de la direction.</p>`) + `<p class="muted">Montants calculés sur le « fixe par jour » saisi pour chaque vendeur. Coût chargé à confirmer avec l'expert-comptable. Le principe : plus le chiffre monte, plus la part rendue aux vendeurs augmente, l'entreprise gardant l'essentiel du supplément.</p>`;
+  $("simu").innerHTML = h;
+}
+
+/* ---------------- Règle du jeu ---------------- */
+function regleBlocs(){
+  const c = calc(), R = c.R, P = c.P, benef = c.vend.filter(x=>x.v.prime);
+  const ind = 100 - num(R.coll);
+  const B = [];
+  B.push(["t", "Prime de fin d'année, stand Destreland 2026"]);
+  B.push(["s", "La règle du jeu"]);
+  B.push(["h", "1. Un objectif d'équipe"]);
+  B.push(["p", `Du ${dLong(R.debut)} au ${dLong(R.fin)}, toute l'équipe vise un chiffre d'affaires du stand. Trois paliers : ${P.map((p,i)=>"palier "+(i+1)+" à "+eur(p)).join(", ")}. Sous ${eur(P[0])}, pas de prime.`]);
+  B.push(["p", `Concrètement, le palier 1 représente environ ${eur(P[0]/(c.jours.length||1))} par jour, soit ${fmt(Math.round(P[0]/(c.jours.length||1)/(num(R.panierRef)||1)))} ventes à ${eur(num(R.panierRef))}. Chaque palier suivant demande environ 10 % de plus : quelques ventes de plus par jour, ou un panier un peu plus garni.`]);
+  B.push(["h", "2. Ce que tu peux gagner"]);
+  B.push(["p", `La prime est un pourcentage de ton salaire de la période : ${R.pct.map((x,i)=>x+" % au palier "+(i+1)).join(", ")}.`]);
+  benef.forEach(x => B.push(["l", `${x.v.nom} (${x.jours} jours) : jusqu'à ${eur(x.coll(P.length-1)+x.ind(P.length-1,1))} au palier 3, plus les jours gagnés.`]));
+  B.push(["h", "3. Moitié équipe, moitié perso"]);
+  B.push(["p", `${R.coll} % de ta prime est acquise dès que l'équipe atteint le palier. Les ${ind} % restants dépendent de ton panier moyen (ton CA divisé par ton nombre de tickets) : ${R.seuilBasPct} % de cette part à partir de ${eur(num(R.seuilBas))}, 100 % à partir de ${eur(num(R.seuilHaut))}. En dessous, cette part n'est pas versée.`]);
+  B.push(["p", "Pour faire monter ton panier : proposer à chaque client un petit plus avec son ballotin (une confiture, un sachet, une crème de doucelette)."]);
+  B.push(["h", "4. Les jours gagnés"]);
+  B.push(["p", `Chaque jour, le stand a un objectif du jour, plus élevé à l'approche de Noël. Chaque jour où il est atteint, chaque vendeur présent gagne ${eur(num(R.jourGagne))}. Le compteur est envoyé tous les soirs. Les jours gagnés sont payés avec la prime, si le palier 1 est atteint à la fin.`]);
+  B.push(["h", "5. Comment on suit"]);
+  B.push(["p", "Chaque soir, Isabelle envoie le point de l'équipe dans le groupe WhatsApp, et à chacun son propre point : son CA, son panier moyen, sa prime déjà acquise et ce qu'il peut encore viser."]);
+  B.push(["h", "6. Les règles communes"]);
+  B.push(["l", "Chaque vente est enregistrée dans ABILL sous ton code vendeur : c'est ce qui compte pour ton panier moyen."]);
+  B.push(["l", "Seules les ventes du stand comptent. Les commandes des entreprises se règlent en boutique."]);
+  B.push(["l", "Pour toucher la prime, tu vas au bout de ton contrat, aux dates prévues. Un jour non travaillé ne compte pas comme jour gagné."]);
+  B.push(["l", "La prime est versée sur le bulletin de salaire de janvier, une fois le chiffre du 31/12 connu."]);
+  B.push(["l", "On joue collectif : un client servi par un collègue reste un client de Maison Isaran."]);
+  B.push(["sig", "Fait à ............................, le ............................     Signature du vendeur :                    Signature de la direction :"]);
+  return B;
+}
+function renderRegle(){
+  $("regle").innerHTML = regleBlocs().map(([k,t]) => {
+    if (k==="t") return `<h2 style="font-size:19px">${esc(t)}</h2>`;
+    if (k==="s") return `<p class="muted">${esc(t)}</p>`;
+    if (k==="h") return `<h3>${esc(t)}</h3>`;
+    if (k==="l") return `<p>• ${esc(t)}</p>`;
+    if (k==="sig") return `<p class="muted" style="margin-top:18px">${esc(t)}</p>`;
+    return `<p>${esc(t)}</p>`;
+  }).join("");
+}
+$("bReglePdf").addEventListener("click", () => {
+  if (!window.jspdf){ alert("La bibliothèque PDF n'est pas chargée."); return; }
+  const { jsPDF } = window.jspdf, doc = new jsPDF({unit:"mm", format:"a4"}), W = 210, M = 18;
+  let y = 22; const brun = [122,62,29];
+  regleBlocs().forEach(([k,t]) => {
+    let size = 10.5, style = "normal", col = [43,29,20], pre = "", gap = 2;
+    if (k==="t"){ size = 17; style = "bold"; col = brun; gap = 1; }
+    if (k==="s"){ size = 11; col = [122,106,93]; gap = 5; }
+    if (k==="h"){ size = 12.5; style = "bold"; col = brun; y += 3; }
+    if (k==="l"){ pre = "•  "; }
+    if (k==="sig"){ y += 14; size = 10; }
+    doc.setFont("helvetica", style); doc.setFontSize(size); doc.setTextColor(...col);
+    const lines = doc.splitTextToSize(pdfTxt(pre + t), W - 2*M - (k==="l"?4:0));
+    if (y + lines.length*size*0.42 > 285){ doc.addPage(); y = 20; }
+    doc.text(lines, M + (k==="l"?2:0), y); y += lines.length*size*0.42 + gap;
+  });
+  partager(doc, "Regle du jeu prime stand Destreland 2026.pdf");
+});
+
+/* ---------------- Réglages ---------------- */
+const champs = [["pCharges","charges"],["pTaux","taux"],["pArr","arrondi"],["pColl","coll"],["pSb","seuilBas"],["pSbPct","seuilBasPct"],["pSh","seuilHaut"],["pPanRef","panierRef"],["pJg","jourGagne"],["pJgRef","jourGagneRef"],["pDeb","debut"],["pFin","fin"],["pFerme","fermes"]];
+function renderReglages(){
+  const R = S.reglages;
+  champs.forEach(([id,k]) => $(id).value = R[k]);
+  if (!R.paliersFixes) R.paliersFixes = [45000,50000,55000];
+  [0,1,2].forEach(i => { $("pR"+i).value = R.resultats[i]; $("pP"+i).value = R.pct[i]; $("pF"+i).value = R.paliersFixes[i]; $("pF"+i).disabled = modeCalcule(R); });
+  $("pPaliers").textContent = (modeCalcule(R) ? "Paliers calculés : " : "Paliers appliqués (charges et taux vides) : ") + paliers(R).map((p,i)=>"P"+(i+1)+" "+eur(p)).join(" · ");
+  $("pVend").innerHTML = R.vendeurs.map((v,i) => `<div class="vend">
+    <div class="row"><div><label>Nom</label><input data-i="${i}" data-k="nom" value="${esc(v.nom)}"></div>
+    <div><label>Fixe par jour (€)</label><input data-i="${i}" data-k="fixeJour" type="number" step="1" value="${v.fixeJour}"></div></div>
+    <div class="row"><div><label>Premier jour</label><input data-i="${i}" data-k="debut" type="date" value="${v.debut}"></div>
+    <div><label>Dernier jour</label><input data-i="${i}" data-k="fin" type="date" value="${v.fin}"></div></div>
+    <label style="color:var(--ink)"><input type="checkbox" data-i="${i}" data-k="prime" ${v.prime?"checked":""}>Touche la prime</label>
+    <button class="btn small alt" data-del="${i}">Retirer</button></div>`).join("");
+  $("pVend").querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+    const v = R.vendeurs[+inp.dataset.i], k = inp.dataset.k;
+    v[k] = inp.type === "checkbox" ? inp.checked : (inp.type === "number" ? num(inp.value) : inp.value);
+    save(); majEnTete();
+  }));
+  $("pVend").querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    if (!confirm("Retirer " + R.vendeurs[+b.dataset.del].nom + " ?")) return;
+    R.vendeurs.splice(+b.dataset.del,1); save(); renderReglages();
+  });
+  const jours = joursOuverts(R); let tot = 0; jours.forEach(d => tot += num(R.poids[d]));
+  $("pPoids").innerHTML = `<table><tr><th>Jour</th><th>Poids saisi</th><th>Objectif du jour (P${num(R.jourGagneRef)+1})</th></tr>` +
+    jours.map(d => `<tr><td>${dLong(d)}</td><td><input data-d="${d}" type="number" step="0.01" value="${R.poids[d] ?? 0}" style="max-width:90px;padding:5px"></td><td>${eur(tot ? num(R.poids[d])/tot*paliers(R)[num(R.jourGagneRef)] : 0)}</td></tr>`).join("") +
+    `<tr><td><b>Total</b></td><td>${fmt(tot,2)}</td><td>${eur(paliers(R)[num(R.jourGagneRef)])}</td></tr></table>`;
+  $("pPoids").querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => { R.poids[inp.dataset.d] = num(inp.value); save(); renderReglages(); }));
+}
+champs.forEach(([id,k]) => $(id).addEventListener("change", () => {
+  const el = $(id); S.reglages[k] = (el.type === "number" || el.tagName === "SELECT") ? num(el.value) : el.value;
+  save(); renderReglages(); renderDates(); majEnTete();
+}));
+[0,1,2].forEach(i => {
+  $("pR"+i).addEventListener("change", e => { S.reglages.resultats[i] = num(e.target.value); save(); renderReglages(); });
+  $("pF"+i).addEventListener("change", e => { S.reglages.paliersFixes = S.reglages.paliersFixes || [45000,50000,55000]; S.reglages.paliersFixes[i] = num(e.target.value); save(); renderReglages(); majEnTete(); });
+  $("pP"+i).addEventListener("change", e => { S.reglages.pct[i] = num(e.target.value); save(); renderReglages(); });
+});
+$("bAddV").addEventListener("click", () => {
+  const R = S.reglages; R.vendeurs.push({id:"v"+Date.now(), nom:"Nouveau vendeur", fixeJour:84, debut:R.debut, fin:R.fin, prime:true});
+  save(); renderReglages();
+});
+$("bReset").addEventListener("click", () => {
+  if (!confirm("Remettre tous les réglages d'origine ? Les saisies sont conservées.")) return;
+  S.reglages = defaults(); save(); renderAll();
+});
+$("bWipe").addEventListener("click", () => {
+  if (!confirm("Effacer TOUTES les saisies ? Penser à envoyer une sauvegarde avant.")) return;
+  S.saisies = {}; save(); renderAll();
+});
+$("bExport").addEventListener("click", async () => {
+  const nom = "Sauvegarde prime stand " + today() + ".json";
+  const blob = new Blob([JSON.stringify(S, null, 1)], {type:"application/json"});
+  try {
+    const f = new File([blob], nom, {type:"application/json"});
+    if (navigator.canShare && navigator.canShare({files:[f]})) { await navigator.share({files:[f], title:nom}); return; }
+  } catch(e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; a.click();
+});
+$("fImport").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    let o; try { o = JSON.parse(r.result); if (!o.reglages) throw 0; } catch(err){ alert("Fichier illisible."); return; }
+    if (!o.saisies) {
+      // Fichier de réglages seul (direction) : on garde les saisies du téléphone
+      if (!confirm("Appliquer ces réglages ? Les saisies de ce téléphone sont conservées.")) return;
+      const base = S.reglages; S.reglages = Object.assign({}, base, o.reglages);
+      if (o.reglages.poids) S.reglages.poids = Object.assign({}, base.poids, o.reglages.poids);
+      save(); renderAll(); alert("Réglages appliqués.");
+    } else {
+      if (!confirm("Remplacer toutes les données de ce téléphone (réglages et saisies) par la sauvegarde ?")) return;
+      S = o; save(); renderAll(); alert("Sauvegarde restaurée.");
+    }
+    e.target.value = "";
+  };
+  r.readAsText(f);
+});
+
+/* ---------------- Rendu ---------------- */
+function majEnTete(){
+  const R = S.reglages, P = paliers(R);
+  $("sousTitre").textContent = `Du ${dLong(R.debut)} au ${dLong(R.fin)} · paliers ${P.map(p=>fmt(p/1000)+NBSP+"k€").join(" / ")}`;
+}
+function renderAll(){
+  majEnTete();
+  const on = document.querySelector("section.tab.on").id;
+  if (on === "t-saisie"){ renderDates(); renderSaisie(); }
+  if (on === "t-tableau") renderTableau();
+  if (on === "t-simu") renderSimu();
+  if (on === "t-regle") renderRegle();
+  if (on === "t-reglages") renderReglages();
+}
+renderAll();
+</script>
+</body>
+</html>
