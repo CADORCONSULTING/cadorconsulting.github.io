@@ -167,10 +167,14 @@ nav button i{display:block;font-style:normal;font-size:19px;line-height:1.2}
   <div class="card">
     <h2>3. Les jours gagnés</h2>
     <div class="row">
-      <div><label for="pJg">Prime par jour gagné et par vendeur présent (€)</label><input id="pJg" type="number" step="1"></div>
+      <div><label for="pJ0">Valeur d'un jour gagné si l'équipe finit au palier 1 (€)</label><input id="pJ0" type="number" step="1"></div>
+      <div><label for="pJ1">… au palier 2 (€)</label><input id="pJ1" type="number" step="1"></div>
+    </div>
+    <div class="row">
+      <div><label for="pJ2">… au palier 3 (€)</label><input id="pJ2" type="number" step="1"></div>
       <div><label for="pJgRef">Objectif du jour calé sur le palier</label><select id="pJgRef"><option value="0">1</option><option value="1">2</option><option value="2">3</option></select></div>
     </div>
-    <p class="muted">Les jours gagnés ne sont versés que si le palier 1 est atteint à la fin.</p>
+    <p class="muted">Par vendeur présent. La valeur dépend du palier atteint au 31/12 : plus l'équipe monte, plus chaque jour gagné vaut cher. Rien n'est versé si le palier 1 n'est pas atteint.</p>
   </div>
 
   <div class="card">
@@ -227,7 +231,7 @@ function defaults(){
     paliersFixes:[45000,50000,55000],
     charges:0, taux:0, resultats:[0,0,0], arrondi:1000,
     pct:[10,20,30], coll:50, seuilBas:28, seuilBasPct:50, seuilHaut:30, panierRef:27,
-    jourGagne:5, jourGagneRef:1,
+    jourGagne:[5,7,10], jourGagneRef:1,
     debut:"2026-12-05", fin:"2026-12-31", fermes:"2026-12-25",
     poids,
     vendeurs:[
@@ -241,7 +245,12 @@ function defaults(){
 const KEY = "isaran-prime-stand-2026";
 let S = {reglages: defaults(), saisies: {}};
 try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); if (o && o.reglages) S = o; } } catch(e) {}
+// Avant le 28/10/2026 le jour gagné avait une seule valeur : on passe aux trois valeurs par palier
+function normaliser(){ if (!Array.isArray(S.reglages.jourGagne)) S.reglages.jourGagne = defaults().jourGagne; }
+normaliser();
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+// Valeur d'un jour gagné selon le palier atteint (indice 0 à 2, -1 = aucun palier)
+function jgVal(R, i){ return i < 0 ? 0 : num(R.jourGagne[Math.min(i, R.jourGagne.length-1)]); }
 
 /* ---------------- Outils ---------------- */
 const $ = id => document.getElementById(id);
@@ -312,10 +321,11 @@ function calc(){
     const primePalier = i => i < 0 ? 0 : fixe*num(R.pct[i])/100;
     const coll = i => primePalier(i)*num(R.coll)/100;
     const ind = (i, t) => primePalier(i)*(1-num(R.coll)/100)*t;
-    const joursEur = jgv*num(R.jourGagne);
-    const acquis = v.prime && atteint >= 0 ? coll(atteint)+ind(atteint,tauxInd)+joursEur : 0;
-    const visee = v.prime && projete >= 0 ? coll(projete)+ind(projete,tauxInd)+joursEur : 0;
-    const max = v.prime ? coll(P.length-1)+ind(P.length-1,1)+jv.length*num(R.jourGagne) : 0;
+    // Jours gagnés valorisés au palier atteint (au palier 1 tant qu'aucun palier n'est atteint, pour information)
+    const joursEur = jgv*jgVal(R, Math.max(atteint, 0));
+    const acquis = v.prime && atteint >= 0 ? coll(atteint)+ind(atteint,tauxInd)+jgv*jgVal(R, atteint) : 0;
+    const visee = v.prime && projete >= 0 ? coll(projete)+ind(projete,tauxInd)+jgv*jgVal(R, projete) : 0;
+    const max = v.prime ? coll(P.length-1)+ind(P.length-1,1)+jv.length*jgVal(R, P.length-1) : 0;
     return {v, jours:jv.length, fixe, ca, tk, panier, tauxInd, jgv, pres, joursEur, acquis, visee, max, coll, ind, primePalier};
   });
   return {R, P, jours, poids, parJour, saisis, cumul, tickets, fiches, jg, projection, atteint, projete, dernier, restants, panierEq, suivant, resteSuivant, vend, ref};
@@ -502,19 +512,20 @@ function renderSimu(){
   c.vend.filter(x => x.v.prime).forEach(x => {
     h += `<h3>${esc(x.v.nom)} · ${x.jours} jours · salaire ${eur(x.fixe)}</h3><div class="scroll"><table><tr><th>Palier</th>${niveaux.map(n=>`<th>Panier ${n.l}</th>`).join("")}</tr>`;
     P.forEach((p,i) => { h += `<tr><td>P${i+1} ${fmt(p/1000)}${NBSP}k€</td>${niveaux.map(n=>`<td>${eur(x.coll(i)+x.ind(i,n.t))}</td>`).join("")}</tr>`; });
-    h += `<tr><td colspan="4" class="muted" style="text-align:left">+ jours gagnés : jusqu'à ${eur(x.jours*num(R.jourGagne))} (${x.jours} × ${eur(num(R.jourGagne))})</td></tr></table></div>`;
+    h += `<tr><td colspan="4" class="muted" style="text-align:left">+ jours gagnés : ${x.jours} au maximum, à ${P.map((p,i)=>eur(jgVal(R,i))).join(" / ")} selon le palier, soit jusqu'à ${eur(x.jours*jgVal(R,P.length-1))}</td></tr></table></div>`;
   });
-  // coût équipe et part du résultat
+  // coût équipe et part du résultat (primes de palier + jours gagnés, tous gagnés)
   const benef = c.vend.filter(x => x.v.prime);
-  const jgMax = benef.reduce((s,x)=>s + x.jours*num(R.jourGagne), 0);
+  const joursBenef = benef.reduce((s,x)=>s + x.jours, 0);
   const avecRes = modeCalcule(R);
-  h += `<h3>Coût pour l'entreprise (équipe, panier haut pour tous)</h3><div class="scroll"><table><tr><th>Palier</th><th>Primes de palier</th><th>+ jours gagnés max</th>${avecRes ? "<th>Résultat espéré</th><th>Part du résultat rendue</th><th>Part du supplément rendue</th>" : "<th>En % du CA</th>"}</tr>`;
+  h += `<h3>Coût pour l'entreprise (équipe, panier haut pour tous, tous les jours gagnés)</h3><div class="scroll"><table><tr><th>Palier</th><th>Primes de palier</th><th>+ jours gagnés max</th><th>Total</th>${avecRes ? "<th>Résultat espéré</th><th>Part du résultat rendue</th><th>Part du supplément rendue</th>" : "<th>En % du CA</th>"}</tr>`;
   let prevCout = null, prevRes = null;
   P.forEach((p,i) => {
-    const cout = benef.reduce((s,x)=>s + x.primePalier(i), 0);
+    const jgMax = joursBenef*jgVal(R,i);
+    const cout = benef.reduce((s,x)=>s + x.primePalier(i), 0) + jgMax;
     const res = num(R.resultats[i]);
     const sup = prevCout == null ? "-" : pct((cout-prevCout)/((res-prevRes)||1),1);
-    h += `<tr><td>P${i+1}</td><td>${eur(cout)}</td><td>${eur(jgMax)}</td>${avecRes ? `<td>${eur(res)}</td><td>${pct(cout/(res||1),1)}</td><td>${sup}</td>` : `<td>${pct((cout+jgMax)/(p||1),1)}</td>`}</tr>`;
+    h += `<tr><td>P${i+1}</td><td>${eur(cout-jgMax)}</td><td>${eur(jgMax)}</td><td>${eur(cout)}</td>${avecRes ? `<td>${eur(res)}</td><td>${pct(cout/(res||1),1)}</td><td>${sup}</td>` : `<td>${pct(cout/(p||1),1)}</td>`}</tr>`;
     prevCout = cout; prevRes = res;
   });
   h += `</table></div>` + (avecRes ? "" : `<p class="muted">Pour voir la part du résultat rendue aux vendeurs, restaurer le fichier de réglages de la direction.</p>`) + `<p class="muted">Montants calculés sur le « fixe par jour » saisi pour chaque vendeur. Coût chargé à confirmer avec l'expert-comptable. Le principe : plus le chiffre monte, plus la part rendue aux vendeurs augmente, l'entreprise gardant l'essentiel du supplément.</p>`;
@@ -538,7 +549,7 @@ function regleBlocs(){
   B.push(["p", `${R.coll} % de ta prime est acquise dès que l'équipe atteint le palier. Les ${ind} % restants dépendent de ton panier moyen (ton CA divisé par ton nombre de tickets) : ${R.seuilBasPct} % de cette part à partir de ${eur(num(R.seuilBas))}, 100 % à partir de ${eur(num(R.seuilHaut))}. En dessous, cette part n'est pas versée.`]);
   B.push(["p", "Pour faire monter ton panier : proposer à chaque client un petit plus avec son ballotin (une confiture, un sachet, une crème de doucelette)."]);
   B.push(["h", "4. Les jours gagnés"]);
-  B.push(["p", `Chaque jour, le stand a un objectif du jour, plus élevé à l'approche de Noël. Chaque jour où il est atteint, chaque vendeur présent gagne ${eur(num(R.jourGagne))}. Le compteur est envoyé tous les soirs. Les jours gagnés sont payés avec la prime, si le palier 1 est atteint à la fin.`]);
+  B.push(["p", `Chaque jour, le stand a un objectif du jour, plus élevé à l'approche de Noël. Chaque jour où il est atteint, chaque vendeur présent compte un jour gagné. Un jour gagné vaut ${P.map((p,i)=>eur(jgVal(R,i))+" si l'équipe finit au palier "+(i+1)).join(", ")} : plus l'équipe monte, plus chaque jour vaut cher. Le compteur est envoyé tous les soirs. Les jours gagnés sont payés avec la prime, si le palier 1 est atteint à la fin.`]);
   B.push(["h", "5. Comment on suit"]);
   B.push(["p", "Chaque soir, Isabelle envoie le point de l'équipe dans le groupe WhatsApp, et à chacun son propre point : son CA, son panier moyen, sa prime déjà acquise et ce qu'il peut encore viser."]);
   B.push(["h", "6. Les règles communes"]);
@@ -580,12 +591,12 @@ $("bReglePdf").addEventListener("click", () => {
 });
 
 /* ---------------- Réglages ---------------- */
-const champs = [["pCharges","charges"],["pTaux","taux"],["pArr","arrondi"],["pColl","coll"],["pSb","seuilBas"],["pSbPct","seuilBasPct"],["pSh","seuilHaut"],["pPanRef","panierRef"],["pJg","jourGagne"],["pJgRef","jourGagneRef"],["pDeb","debut"],["pFin","fin"],["pFerme","fermes"]];
+const champs = [["pCharges","charges"],["pTaux","taux"],["pArr","arrondi"],["pColl","coll"],["pSb","seuilBas"],["pSbPct","seuilBasPct"],["pSh","seuilHaut"],["pPanRef","panierRef"],["pJgRef","jourGagneRef"],["pDeb","debut"],["pFin","fin"],["pFerme","fermes"]];
 function renderReglages(){
   const R = S.reglages;
   champs.forEach(([id,k]) => $(id).value = R[k]);
   if (!R.paliersFixes) R.paliersFixes = [45000,50000,55000];
-  [0,1,2].forEach(i => { $("pR"+i).value = R.resultats[i]; $("pP"+i).value = R.pct[i]; $("pF"+i).value = R.paliersFixes[i]; $("pF"+i).disabled = modeCalcule(R); });
+  [0,1,2].forEach(i => { $("pR"+i).value = R.resultats[i]; $("pP"+i).value = R.pct[i]; $("pJ"+i).value = R.jourGagne[i]; $("pF"+i).value = R.paliersFixes[i]; $("pF"+i).disabled = modeCalcule(R); });
   $("pPaliers").textContent = (modeCalcule(R) ? "Paliers calculés : " : "Paliers appliqués (charges et taux vides) : ") + paliers(R).map((p,i)=>"P"+(i+1)+" "+eur(p)).join(" · ");
   $("pVend").innerHTML = R.vendeurs.map((v,i) => `<div class="vend">
     <div class="row"><div><label>Nom</label><input data-i="${i}" data-k="nom" value="${esc(v.nom)}"></div>
@@ -617,6 +628,7 @@ champs.forEach(([id,k]) => $(id).addEventListener("change", () => {
   $("pR"+i).addEventListener("change", e => { S.reglages.resultats[i] = num(e.target.value); save(); renderReglages(); });
   $("pF"+i).addEventListener("change", e => { S.reglages.paliersFixes = S.reglages.paliersFixes || [45000,50000,55000]; S.reglages.paliersFixes[i] = num(e.target.value); save(); renderReglages(); majEnTete(); });
   $("pP"+i).addEventListener("change", e => { S.reglages.pct[i] = num(e.target.value); save(); renderReglages(); });
+  $("pJ"+i).addEventListener("change", e => { S.reglages.jourGagne[i] = num(e.target.value); save(); renderReglages(); });
 });
 $("bAddV").addEventListener("click", () => {
   const R = S.reglages; R.vendeurs.push({id:"v"+Date.now(), nom:"Nouveau vendeur", fixeJour:84, debut:R.debut, fin:R.fin, prime:true});
@@ -649,10 +661,10 @@ $("fImport").addEventListener("change", e => {
       if (!confirm("Appliquer ces réglages ? Les saisies de ce téléphone sont conservées.")) return;
       const base = S.reglages; S.reglages = Object.assign({}, base, o.reglages);
       if (o.reglages.poids) S.reglages.poids = Object.assign({}, base.poids, o.reglages.poids);
-      save(); renderAll(); alert("Réglages appliqués.");
+      normaliser(); save(); renderAll(); alert("Réglages appliqués.");
     } else {
       if (!confirm("Remplacer toutes les données de ce téléphone (réglages et saisies) par la sauvegarde ?")) return;
-      S = o; save(); renderAll(); alert("Sauvegarde restaurée.");
+      S = o; normaliser(); save(); renderAll(); alert("Sauvegarde restaurée.");
     }
     e.target.value = "";
   };
